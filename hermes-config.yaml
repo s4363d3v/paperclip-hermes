@@ -1,0 +1,9 @@
+# Minimal Hermes config — prevents the interactive setup wizard.
+# Override at runtime with HERMES_MODEL / HERMES_INFERENCE_PROVIDER env vars,
+# or edit this file in the persistent volume at $HERMES_HOME/config.yaml.
+model:
+  provider: anthropic
+  model: anthropic/claude-sonnet-4-20250514
+
+terminal:
+  backend: local

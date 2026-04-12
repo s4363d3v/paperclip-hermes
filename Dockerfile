@@ -20,6 +20,12 @@ RUN HOME=/opt/hermes \
     && chmod -R a+rX /opt/hermes \
     && ln -sf /opt/hermes/.local/bin/hermes /usr/local/bin/hermes
 
+# Pre-seed minimal Hermes config so it never triggers the interactive setup wizard.
+# The model/provider can be overridden at runtime via HERMES_MODEL and
+# HERMES_INFERENCE_PROVIDER env vars.
+COPY hermes-config.yaml /etc/hermes/config.yaml
+RUN touch /etc/hermes/.env
+
 # Install Paperclip (goes to /usr/local/bin, accessible by all users)
 RUN npm install -g paperclipai
 

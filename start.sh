@@ -13,5 +13,5 @@ exec su -s /bin/bash node -c "
   export PAPERCLIP_HOME='${PAPERCLIP_HOME}'
   export HERMES_HOME='${HERMES_HOME}'
   export HOST='0.0.0.0'
-  exec paperclipai run
+  exec paperclipai allowed-hostname ${IP_ADDRESS} && paperclipai run
 "

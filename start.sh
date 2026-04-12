@@ -9,6 +9,7 @@ export HOME="${PAPERCLIP_HOME}"
 export HOST="0.0.0.0"
 
 mkdir -p "${PAPERCLIP_HOME}" "${HERMES_HOME}"
+chown -R node:node "${PAPERCLIP_HOME}" "${HERMES_HOME}"
 
 # Seed Hermes config if not already present
 if [ ! -f "${HERMES_HOME}/config.yaml" ]; then
@@ -29,5 +30,5 @@ if [ -n "${IP_ADDRESS:-}" ]; then
   paperclipai allowed-hostname "${IP_ADDRESS}" || echo "[entrypoint] WARNING: allowed-hostname failed (will retry after start)"
 fi
 
-echo "[entrypoint] starting paperclipai run"
-exec paperclipai run
+echo "[entrypoint] starting paperclipai run as node (postgres refuses root)"
+exec su -s /bin/bash node -c "HOME=${PAPERCLIP_HOME} PAPERCLIP_HOME=${PAPERCLIP_HOME} HERMES_HOME=${HERMES_HOME} HOST=0.0.0.0 exec paperclipai run"

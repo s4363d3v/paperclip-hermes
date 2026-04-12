@@ -1,10 +1,8 @@
 FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV HOME=/root
-ENV PATH="/root/.local/bin:${PATH}"
 ENV PAPERCLIP_HOME=/data/paperclip
-ENV HERMES_HOME=/root/.hermes
+ENV HERMES_HOME=/data/hermes
 
 RUN apt-get update && apt-get install -y \
     bash \
@@ -16,18 +14,23 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Hermes without interactive setup
-RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup
+# Install Hermes to /opt/hermes (not /root) so the node user can access it
+RUN HOME=/opt/hermes \
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup \
+    && chmod -R a+rX /opt/hermes \
+    && ln -sf /opt/hermes/.local/bin/hermes /usr/local/bin/hermes
 
-# Install Paperclip
+# Install Paperclip (goes to /usr/local/bin, accessible by all users)
 RUN npm install -g paperclipai
 
-RUN mkdir -p /data/paperclip /root/.hermes /workspace
+RUN mkdir -p /data/paperclip /data/hermes /workspace \
+    && chown -R node:node /data/paperclip /data/hermes /workspace
 
 WORKDIR /workspace
 
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start-worker.sh /start-worker.sh
+RUN chmod +x /start.sh /start-worker.sh
 
 EXPOSE 3100
 

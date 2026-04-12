@@ -14,9 +14,11 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Hermes to /opt/hermes (not /root) so the node user can access it
-RUN HOME=/opt/hermes \
-    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup \
+# Install Hermes to /opt/hermes (not /root) so the node user can access it.
+# HOME must be exported so the piped bash subprocess inherits it.
+RUN mkdir -p /opt/hermes \
+    && export HOME=/opt/hermes \
+    && curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup \
     && chmod -R a+rX /opt/hermes \
     && ln -sf /opt/hermes/.local/bin/hermes /usr/local/bin/hermes
 

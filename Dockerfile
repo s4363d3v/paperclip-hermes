@@ -31,14 +31,12 @@ RUN touch /etc/hermes/.env
 # Install Paperclip (goes to /usr/local/bin, accessible by all users)
 RUN npm install -g paperclipai
 
-RUN mkdir -p /data/paperclip /data/hermes /workspace \
-    && chown -R node:node /data/paperclip /data/hermes /workspace
+RUN mkdir -p /data/paperclip /data/hermes /workspace
 
 WORKDIR /workspace
 
 COPY start.sh /start.sh
-COPY start-worker.sh /start-worker.sh
-RUN chmod +x /start.sh /start-worker.sh
+RUN chmod +x /start.sh
 
 EXPOSE 3100
 

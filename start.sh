@@ -8,4 +8,5 @@ export HERMES_HOME="${HERMES_HOME:-/root/.hermes}"
 
 mkdir -p "${PAPERCLIP_HOME}" "${HERMES_HOME}"
 
-exec paperclipai run
+# exec paperclipai run
+wait -n 3600

@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-mkdir -p "${PAPERCLIP_HOME}" "${HERMES_HOME}"
-export HOME=/root
-
 mkdir -p /root/.hermes
+mkdir -p "${PAPERCLIP_HOME:-/data/paperclip}"
 
-if [ ! -e /root/.hermes/config.yaml ] && [ ! -L /root/.hermes ]; then
-  rm -rf /root/.hermes
-  ln -s "${HERMES_HOME}" /root/.hermes
+# Write Hermes env file from container env if provided
+touch /root/.hermes/.env
+
+if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+  if ! grep -q '^OPENROUTER_API_KEY=' /root/.hermes/.env 2>/dev/null; then
+    echo "OPENROUTER_API_KEY=${OPENROUTER_API_KEY}" >> /root/.hermes/.env
+  else
+    sed -i "s|^OPENROUTER_API_KEY=.*|OPENROUTER_API_KEY=${OPENROUTER_API_KEY}|" /root/.hermes/.env
+  fi
 fi
 
-if [ ! -f "${PAPERCLIP_HOME}/.initialized" ]; then
-  mkdir -p "${PAPERCLIP_HOME}"
-  cd "${PAPERCLIP_HOME}"
-  npx paperclipai onboard --yes
-  touch "${PAPERCLIP_HOME}/.initialized"
+# Optional: set model/provider defaults if Hermes CLI is available
+if command -v hermes >/dev/null 2>&1; then
+  hermes config set OPENROUTER_API_KEY "${OPENROUTER_API_KEY:-}" || true
 fi
 
-cd "${PAPERCLIP_HOME}"
+# Start your app here
 exec npx paperclipai run

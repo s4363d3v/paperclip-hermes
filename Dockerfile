@@ -2,7 +2,7 @@ FROM node:20-bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PAPERCLIP_HOME=/data/paperclip
-ENV HERMES_HOME=/data/hermes
+ENV HERMES_HOME=/root/.hermes
 ENV PATH="/root/.local/bin:${PATH}"
 
 RUN apt-get update && apt-get install -y \
@@ -15,13 +15,13 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Hermes
+# Install Hermes without interactive setup
 RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup
 
 # Install Paperclip CLI
 RUN npm install -g paperclipai
 
-RUN mkdir -p /data/paperclip /data/hermes /workspace
+RUN mkdir -p /data/paperclip /root/.hermes /workspace
 
 WORKDIR /workspace
 

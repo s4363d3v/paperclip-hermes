@@ -8,5 +8,6 @@ export HERMES_HOME="${HERMES_HOME:-/root/.hermes}"
 
 mkdir -p "${PAPERCLIP_HOME}" "${HERMES_HOME}"
 
-echo "Container is alive. Sleeping forever for debugging..."
-tail -f /dev/null
+echo "Container is alive. Starting paperclip"
+
+exec paperclipai run

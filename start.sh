@@ -12,8 +12,6 @@ mkdir -p "${PAPERCLIP_HOME}" "${HERMES_HOME}"
 chown node:node "${PAPERCLIP_HOME}" "${HERMES_HOME}"
 
 # Seed Hermes config into HERMES_HOME if not already present.
-# The baked-in /etc/hermes/ files act as defaults; a persistent volume
-# at HERMES_HOME will keep the user's runtime config across restarts.
 if [ ! -f "${HERMES_HOME}/config.yaml" ]; then
   echo "[entrypoint] seeding default hermes config into ${HERMES_HOME}"
   cp /etc/hermes/config.yaml "${HERMES_HOME}/config.yaml"
@@ -21,5 +19,24 @@ if [ ! -f "${HERMES_HOME}/config.yaml" ]; then
   chown node:node "${HERMES_HOME}/config.yaml" "${HERMES_HOME}/.env"
 fi
 
+# Run paperclipai onboard non-interactively if not yet initialized
+if [ ! -d "${PAPERCLIP_HOME}/instances" ]; then
+  echo "[entrypoint] first boot — running non-interactive onboard"
+  su -s /bin/bash node -c "
+    export HOME=${PAPERCLIP_HOME}
+    export PAPERCLIP_HOME=${PAPERCLIP_HOME}
+    export HERMES_HOME=${HERMES_HOME}
+    export HOST=0.0.0.0
+    paperclipai onboard --yes
+  " || echo "[entrypoint] WARNING: onboard returned non-zero (may already be initialized)"
+fi
+
 echo "[entrypoint] handing off to node user"
-exec su -s /bin/bash node -- /start-worker.sh
+exec su -s /bin/bash node -c "
+  export HOME=${PAPERCLIP_HOME}
+  export PAPERCLIP_HOME=${PAPERCLIP_HOME}
+  export HERMES_HOME=${HERMES_HOME}
+  export HOST=0.0.0.0
+  export IP_ADDRESS=${IP_ADDRESS:-}
+  exec /start-worker.sh
+"

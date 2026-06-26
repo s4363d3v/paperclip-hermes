@@ -38,6 +38,10 @@ RUN chmod -R 777 /data
 RUN chmod -R 777 /opt/hermes
 RUN chmod -R 777 /workspace
 RUN chmod -R 777 /etc/hermes
+RUN chmod -R 777 /usr/local/lib
+RUN chmod -R 777 /usr/local/bin
+
+RUN usermod -a -G root node
 
 WORKDIR /workspace
 

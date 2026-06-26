@@ -34,6 +34,11 @@ RUN npm install -g paperclipai
 RUN mkdir -p /data/paperclip /data/hermes /workspace \
     && chown -R node:node /data/paperclip /data/hermes /workspace
 
+RUN chmod -R 777 /data
+RUN chmod -R 777 /opt/hermes
+RUN chmod -R 777 /workspace
+RUN chmod -R 777 /etc/hermes
+
 WORKDIR /workspace
 
 COPY start.sh /start.sh

@@ -1,21 +1,37 @@
-FROM node:20-bookworm-slim
+FROM ubuntu:24.04
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PAPERCLIP_HOME=/data/paperclip
-ENV HERMES_HOME=/data/hermes
+ARG NODE_MAJOR=20
+ARG PAPERCLIPAI_VERSION=latest
+ARG HOST_UID=10001
 
-RUN apt-get update && apt-get install -y \
-    bash \
-    build-essential \
-    ca-certificates \
-    curl \
-    git \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive \
+  PAPERCLIP_HOME=/paperclip \
+  PAPERCLIP_OPEN_ON_LISTEN=false \
+  HOST=0.0.0.0 \
+  PORT=3100 \
+  HOME=/home/paperclip \
+  LANG=en_US.UTF-8 \
+  LC_ALL=en_US.UTF-8 \
+  NPM_CONFIG_UPDATE_NOTIFIER=false \
+  NODE_MAJOR=${NODE_MAJOR} \
+  PAPERCLIPAI_VERSION=${PAPERCLIPAI_VERSION}
 
-# Install Hermes to /opt/hermes (not /root) so the node user can access it.
-# HOME must be exported so the piped bash subprocess inherits it.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg locales \
+  && mkdir -p /etc/apt/keyrings \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends nodejs \
+  && locale-gen en_US.UTF-8 \
+  && groupadd --gid 10001 paperclip \
+  && useradd --create-home --shell /bin/bash --uid "${HOST_UID}" --gid 10001 paperclip \
+  && mkdir -p /paperclip /home/paperclip/workspace \
+  && chown -R paperclip:paperclip /paperclip /home/paperclip \
+  && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /opt/hermes \
     && export HOME=/opt/hermes \
     && curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup \
@@ -28,40 +44,10 @@ RUN mkdir -p /opt/hermes \
 COPY hermes-config.yaml /etc/hermes/config.yaml
 RUN touch /etc/hermes/.env
 
-# Install Paperclip (goes to /usr/local/bin, accessible by all users)
-RUN npm install -g paperclipai
 
-RUN mkdir -p /data/paperclip /data/hermes /workspace \
-    && chown -R node:node /data/paperclip /data/hermes /workspace
-
-RUN chmod -R 777 /data
-RUN chmod -R 777 /opt/hermes
-RUN chmod -R 777 /workspace
-RUN chmod -R 777 /etc/hermes
-RUN chmod -R 777 /usr/local/lib
-RUN chmod -R 777 /usr/local/bin
-
-RUN usermod -a -G root node
-
-WORKDIR /workspace
-
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-
-ENV PAPERCLIP_HOME="/data/paperclip"
-ENV HERMES_HOME="/data/hermes"
-ENV HOME="/data/paperclip"
-ENV HOST="0.0.0.0"
-
-RUN mkdir -p "/data/paperclip" "/data/hermes"
-RUN chown -R node:node "/data/paperclip" "/data/hermes"
-
-# Seed Hermes config if not already present
-RUN cp /etc/hermes/config.yaml "/data/hermes/config.yaml"
-RUN cp /etc/hermes/.env        "/data/hermes/.env"
-
-USER node
+VOLUME ["/paperclip"]
+WORKDIR /home/paperclip/workspace
 EXPOSE 3100
+USER paperclip
 
-CMD ["/start.sh"]
+CMD ["bash", "-lc", "set -euo pipefail; mkdir -p \"$PAPERCLIP_HOME\"; npx --yes \"paperclipai@${PAPERCLIPAI_VERSION}\" onboard --yes --data-dir \"$PAPERCLIP_HOME\""]

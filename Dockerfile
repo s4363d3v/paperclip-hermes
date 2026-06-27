@@ -48,6 +48,20 @@ WORKDIR /workspace
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
+
+ENV PAPERCLIP_HOME="/data/paperclip"
+ENV HERMES_HOME="/data/hermes"
+ENV HOME="/data/paperclip"
+ENV HOST="0.0.0.0"
+
+RUN mkdir -p "/data/paperclip" "/data/hermes"
+RUN chown -R node:node "/data/paperclip" "/data/hermes"
+
+# Seed Hermes config if not already present
+RUN cp /etc/hermes/config.yaml "/data/hermes/config.yaml"
+RUN cp /etc/hermes/.env        "/data/hermes/.env"
+
+USER node
 EXPOSE 3100
 
 CMD ["/start.sh"]
